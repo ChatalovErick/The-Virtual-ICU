@@ -33,14 +33,37 @@ AS SELECT
   ingestion_time
 FROM STREAM patient_data.bronze_patient_vitals.patient_vitals; 
 
-CREATE OR REFRESH MATERIALIZED VIEW patient_data.gold_patient_vitals.patient_exercise_summary
+-- 1. Daily Summary per Patient
+CREATE OR REFRESH MATERIALIZED VIEW patient_data.gold_patient_vitals.patient_daily_summary
 AS SELECT
   patient_id,
+  date_trunc('day', event_time) as report_day,
   current_state,
+  -- Averages for all tracked vitals
   AVG(heart_rate) as avg_bpm,
-  AVG(spo2) as avg_spo2,
-  MIN(spo2) as min_spo2, -- Critical for identifying "Desaturation" events
   AVG(resp_rate) as avg_resp_rate,
-  COUNT(*) as total_readings
+  AVG(spo2) as avg_spo2,
+  -- Use ingestion time as a metadata tracker
+  MAX(ingestion_time) as last_processed_at 
 FROM patient_data.silver_patient_vitals.patient_vitals_cleaned
-GROUP BY patient_id, current_state
+GROUP BY patient_id, current_state, report_day;
+
+-- 2. Population Benchmarks
+CREATE OR REFRESH MATERIALIZED VIEW patient_data.gold_patient_vitals.global_vital_stats
+COMMENT "Population-level benchmarks for heart rate, SpO2, and Respiratory Rate across all patients."
+AS SELECT
+  date_trunc('day', event_time) as observation_date,
+  current_state,
+  -- Heart Rate Stats
+  AVG(heart_rate) as pop_avg_hr,
+  STDDEV(heart_rate) as hr_standard_deviation,
+  -- SpO2 Stats
+  AVG(spo2) as pop_avg_spo2,
+  STDDEV(spo2) as spo2_standard_deviation,
+  -- Respiratory Rate Stats
+  AVG(resp_rate) as pop_avg_resp_rate,
+  STDDEV(resp_rate) as resp_standard_deviation,
+  -- Metadata
+  COUNT(DISTINCT patient_id) as unique_patients_monitored
+FROM patient_data.silver_patient_vitals.patient_vitals_cleaned
+GROUP BY observation_date, current_state;
