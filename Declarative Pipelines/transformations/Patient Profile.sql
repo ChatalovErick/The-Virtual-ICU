@@ -1,4 +1,3 @@
-
 CREATE OR REFRESH STREAMING TABLE patient_data.silver_patients.patients_prepared
 (
   CONSTRAINT valid_id  EXPECT (patient_id IS NOT NULL),
