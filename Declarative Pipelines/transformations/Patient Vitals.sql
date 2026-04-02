@@ -9,29 +9,47 @@ FROM STREAM read_files(
   rescuedDataColumn => "_rescued_data"
 );
 
-CREATE OR REFRESH STREAMING TABLE patient_data.silver_patient_vitals.patient_vitals_cleaned
+-- The Flagging Table
+CREATE OR REFRESH STREAMING TABLE patient_data.silver_patient_vitals.vitals_prepared
 (
-  -- Existing Heart Rate Constraint
-  CONSTRAINT valid_heart_rate EXPECT (heart_rate > 20 AND heart_rate < 300) ON VIOLATION DROP ROW,
-  
-  -- New Oxygen Saturation Constraint
-  CONSTRAINT valid_spo2 EXPECT (spo2 >= 50 AND spo2 <= 100) ON VIOLATION DROP ROW,
-  
-  -- New Respiratory Rate Constraint
-  CONSTRAINT valid_resp_rate EXPECT (resp_rate > 4 AND resp_rate < 70) ON VIOLATION DROP ROW
+  CONSTRAINT valid_heart_rate EXPECT (heart_rate > 20 AND heart_rate < 300),
+  CONSTRAINT valid_spo2       EXPECT (spo2 >= 50 AND spo2 <= 100),
+  CONSTRAINT valid_resp_rate   EXPECT (resp_rate > 4 AND resp_rate < 70)
 )
-AS SELECT
-  patient_id,
-  CAST(timestamp AS TIMESTAMP) as event_time,
-  heart_rate_bpm AS heart_rate,
-  -- Extracting from the JSON object in _rescued_data
-  CAST(_rescued_data:respiratory_rate AS DOUBLE) as resp_rate,
-  CAST(_rescued_data:spo2_percent AS DOUBLE) as spo2,
-  current_state,
-  -- CHANGE THIS LINE: Remove '_metadata.' and use the name from Bronze
-  source_file_name as source_file,
-  ingestion_time
-FROM STREAM patient_data.bronze_patient_vitals.patient_vitals; 
+COMMENT "Intermediate table flagging physiological outliers for clinical review"
+AS SELECT 
+  *,
+  -- Logic: If ANY constraint is violated, mark as quarantined
+  NOT (
+    (heart_rate > 20 AND heart_rate < 300) AND
+    (spo2 >= 50 AND spo2 <= 100) AND
+    (resp_rate > 4 AND resp_rate < 70)
+  ) AS is_quarantined
+FROM (
+  SELECT
+    patient_id,
+    CAST(timestamp AS TIMESTAMP) as event_time,
+    heart_rate_bpm AS heart_rate,
+    CAST(_rescued_data:respiratory_rate AS DOUBLE) as resp_rate,
+    CAST(_rescued_data:spo2_percent AS DOUBLE) as spo2,
+    current_state,
+    source_file_name as source_file,
+    ingestion_time
+  FROM STREAM(patient_data.bronze_patient_vitals.patient_vitals)
+);
+
+-- clean data 
+CREATE OR REFRESH STREAMING TABLE patient_data.silver_patient_vitals.patient_vitals_cleaned
+COMMENT "Cleaned telemetry data safe for clinical dashboards"
+AS SELECT * EXCEPT (is_quarantined)
+FROM STREAM(patient_data.silver_patient_vitals.vitals_prepared)
+WHERE is_quarantined = FALSE;
+
+-- quarantine data
+CREATE OR REFRESH STREAMING TABLE patient_data.silver_patient_vitals.patient_vitals_quarantine
+COMMENT "Isolated records failing biological bounds for sensor debugging"
+AS SELECT * FROM STREAM(patient_data.silver_patient_vitals.vitals_prepared)
+WHERE is_quarantined = TRUE;
 
 -- 1. Daily Summary per Patient
 CREATE OR REFRESH MATERIALIZED VIEW patient_data.gold_patient_vitals.patient_daily_summary

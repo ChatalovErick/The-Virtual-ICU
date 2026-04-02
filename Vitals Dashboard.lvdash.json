@@ -208,9 +208,6 @@
                     "type": "categorical"
                   }
                 },
-                "label": {
-                  "show": false
-                },
                 "extra": [
                   {
                     "fieldName": "patient_id"

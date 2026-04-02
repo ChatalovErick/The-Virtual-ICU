@@ -13,6 +13,12 @@ AS SELECT *,
   ) AS is_quarantined
 FROM STREAM(patient_data.bronze_patients.bronze_patients_cdc);
 
+-- The Quarantine Table for Patient Profiles
+CREATE OR REFRESH STREAMING TABLE patient_data.silver_patients.patients_quarantine
+COMMENT "Isolated patient demographic records failing ID or Age validation"
+AS SELECT * FROM STREAM(patient_data.silver_patients.patients_prepared)
+WHERE is_quarantined = TRUE;
+
 CREATE OR REFRESH STREAMING TABLE patient_data.silver_patients.patients_profiles
 COMMENT "Final SCD Type 2 table containing only valid patient history";
 
