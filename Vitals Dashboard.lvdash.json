@@ -54,6 +54,11 @@
               "lines": [
                 "# <span style=\"text-align:center;display:block\"><span style=\"font-size: 21px;font-family: Arial;\">Vitals DashBoard</span></span>"
               ]
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
+              }
             }
           },
           "position": {
@@ -99,6 +104,11 @@
                   }
                 ]
               }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
+              }
             }
           },
           "position": {
@@ -132,8 +142,21 @@
             ],
             "spec": {
               "version": 2,
+              "selection": {
+                "defaultSelection": {
+                  "values": {
+                    "dataType": "STRING",
+                    "values": [
+                      {
+                        "value": "GLOBAL"
+                      }
+                    ]
+                  }
+                }
+              },
               "frame": {
-                "showTitle": true
+                "showTitle": true,
+                "showDescription": false
               },
               "widgetType": "filter-multi-select",
               "encodings": {
@@ -143,6 +166,11 @@
                     "queryName": "dashboards/01f12c70ff9e12d1b671b1ed6b253957/datasets/01f12c7a84271231a38dcfdb503de097_patient_id"
                   }
                 ]
+              }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
               }
             }
           },
@@ -213,6 +241,11 @@
                     "fieldName": "patient_id"
                   }
                 ]
+              }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
               }
             }
           },
@@ -287,6 +320,11 @@
                   }
                 ]
               }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
+              }
             }
           },
           "position": {
@@ -359,6 +397,11 @@
                     "fieldName": "patient_id"
                   }
                 ]
+              }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
               }
             }
           },

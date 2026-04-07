@@ -1,0 +1,165 @@
+# databricks.yml
+bundle:
+  name: the-virtual-icu-patient-data
+
+workspace:
+  host: https://<your-workspace-url>  # ← Replace with your actual workspace URL
+
+# ─────────────────────────────────────────────────────
+# VARIABLES (Centralized config)
+# ─────────────────────────────────────────────────────
+variables:
+  # Unity Catalog
+  catalog: patient_data
+  bronze_patients_schema: bronze_patients
+  bronze_vitals_schema: bronze_patient_vitals
+  silver_patients_schema: silver_patients
+  silver_vitals_schema: silver_patient_vitals
+  gold_vitals_schema: gold_patient_vitals
+  
+  # Volume paths
+  vitals_volume: /Volumes/patient_data/ingestion_patient_vitals/raw_jsons
+  
+  # Notifications
+  failure_email: <your-email>
+
+# ─────────────────────────────────────────────────────
+# RESOURCES: PIPELINES (DLT)
+# ─────────────────────────────────────────────────────
+resources:
+  pipelines:
+    # ── Pipeline 1: Patient Vitals (Bronze → Silver → Gold) ──
+    patient_vitals_declarative:
+      name: "Patient Vitals (Declarative)"
+      photon: true
+      channel: CURRENT
+      continuous: false
+      development: false
+      target: "${var.catalog}.${var.silver_vitals_schema}"
+      serverless: true
+      
+      clusters:
+        - label: "default"
+          kind: "serverless"
+      
+      libraries:
+        - file:
+            path: "./declarative-pipelines/patient_vitals.sql"
+      
+      configuration:
+        bundle.root_path: "${workspace.root_path}/src"
+
+    # ── Pipeline 2: Patient Profiles SCD Type 2 ──
+    patient_profiles_scd2:
+      name: "Patient data Silver SCD 2 (Declarative)"
+      photon: true
+      channel: CURRENT
+      continuous: false
+      development: false
+      target: "${var.catalog}.${var.silver_patients_schema}"
+      serverless: true
+      
+      clusters:
+        - label: "default"
+          kind: "serverless"
+      
+      libraries:
+        - file:
+            path: "./declarative-pipelines/patient_profile.sql"
+      
+      configuration:
+        bundle.root_path: "${workspace.root_path}/src"
+
+  # ─────────────────────────────────────────────────────
+  # RESOURCES: JOBS
+  # ─────────────────────────────────────────────────────
+  jobs:
+    # ── Job 1: ETL Pipeline Patient Vitals (Every 6 Hours) ──
+    etl_pipeline_patient_vitals:
+      name: "ETL Pipeline Patient Vitals (Job)"
+      schedule:
+        quartz_cron_expression: "0 0 0/6 * * ?"  # Every 6 hours
+        timezone_id: "UTC"
+        pause_status: "UNPAUSED"
+      email_notifications:
+        on_failure:
+          - "${var.failure_email}"
+      queue:
+        enabled: true
+      performance_target: "PERFORMANCE_OPTIMIZED"
+      
+      tasks:
+        - task_key: data_creation
+          notebook_task:
+            notebook_path: "./data-generator/data_generator.ipynb"
+            source: "WORKSPACE"
+        
+        - task_key: run_patient_vitals_pipeline
+          depends_on:
+            - task_key: data_creation
+          pipeline_task:
+            pipeline_id: "${resources.pipelines.patient_vitals_declarative.id}"
+            full_refresh: false
+
+    # ── Job 2: Ingestion Layer Cleanup (Daily) ──
+    ingestion_layer_cleanup:
+      name: "Injestion Layer Cleanup (Job)"
+      description: "Clean up volume of patient_data from files older than 1 day"
+      schedule:
+        quartz_cron_expression: "0 0 0 * * ?"  # Daily at midnight UTC
+        timezone_id: "UTC"
+        pause_status: "UNPAUSED"
+      email_notifications:
+        on_failure:
+          - "${var.failure_email}"
+      queue:
+        enabled: true
+      performance_target: "PERFORMANCE_OPTIMIZED"
+      
+      tasks:
+        - task_key: ingestion_cleanup_task
+          notebook_task:
+            notebook_path: "./data-generator/ingestion_cleanup.ipynb"
+            source: "WORKSPACE"
+
+    # ── Job 3: Patient Data Silver SCD 2 (Daily) ──
+    patient_data_silver_scd2_job:
+      name: "Patient data Silver SCD 2 (Job)"
+      schedule:
+        quartz_cron_expression: "0 0 0 * * ?"  # Daily at midnight UTC
+        timezone_id: "UTC"
+        pause_status: "UNPAUSED"
+      email_notifications:
+        on_failure:
+          - "${var.failure_email}"
+      notification_settings:
+        no_alert_for_skipped_runs: true
+      performance_target: "PERFORMANCE_OPTIMIZED"
+      
+      tasks:
+        - task_key: patient_data_silver_scd_2
+          pipeline_task:
+            pipeline_id: "${resources.pipelines.patient_profiles_scd2.id}"
+            full_refresh: false
+
+    # ── Job 4: Patient Profile Update Spark Job (Every 3 Hours) ──
+    patient_profile_update_spark_job:
+      name: "Patient Profile Update (Spark Job)"
+      schedule:
+        quartz_cron_expression: "0 0 0/3 * * ?"  # Every 3 hours
+        timezone_id: "UTC"
+        pause_status: "UNPAUSED"
+      email_notifications:
+        on_failure:
+          - "${var.failure_email}"
+      notification_settings:
+        no_alert_for_skipped_runs: true
+      queue:
+        enabled: true
+      performance_target: "PERFORMANCE_OPTIMIZED"
+      
+      tasks:
+        - task_key: patient_profile_update
+          notebook_task:
+            notebook_path: "./data-generator/patient_profile_update.ipynb"
+            source: "WORKSPACE"

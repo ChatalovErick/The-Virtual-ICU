@@ -3,6 +3,8 @@
 
 This project implements a production-grade **Medallion Architecture** using **Databricks Delta Live Tables (DLT)**. It simulates a "Virtual ICU" environment, merging high-frequency physiological telemetry with slowly changing patient demographics to provide a holistic clinical view.
 
+> 💡 **Now GitOps-Ready**: This project uses **Databricks Asset Bundles (DABs)** for declarative infrastructure. Deploy pipelines, jobs, and configurations from code via `databricks.yml`.
+
 ---
 
 ## 🏗️ System Architecture
@@ -60,14 +62,19 @@ The final layer feeds a **Databricks SQL Dashboard**, providing real-time visual
 * **CDC Excellence:** Seamlessly handles out-of-order data updates using `SEQUENCE BY` on the `updated_at` timestamp.
 * **Schema-on-Read:** Extracts metrics from rescued data columns that weren't in the initial definition.
 * **Incremental Processing:** Optimized for cost by only processing new files or changed rows.
+* **GitOps-Ready Infrastructure**: Deploy pipelines, jobs, and configs from code via `databricks.yml` + Databricks CLI.
 
 ---
 
-## 🛠️ Setup & Usage
-1.  **Initialize Environment:** Run the `01_setup_unity_catalog_hierarchy` notebook.
-2.  **Generate Data:** * Execute the **Multi-Vital Patient Simulator** for real-time telemetry.
-    * Run the **Patient Profile Update** notebook to generate CDC entries.
-3.  **Deploy Pipeline:** Create a DLT pipeline targeting both `Patient Vitals.sql` and `Patient Profile.sql`.
-4.  **Monitor:** Use the DLT UI to observe data quality metrics and the flow from Bronze to Gold.
+## ⚙️ Declarative Infrastructure: `databricks.yml`
+This project uses **Databricks Asset Bundles (DABs)** to define all resources as code. The `databricks.yml` file declares:
 
-> **Note:** This project is optimized for **Databricks Unity Catalog**. Ensure your cluster has access to the `patient_data` catalog before execution.
+### 📦 Resources Defined
+| Resource Type | Name | Purpose |
+|--------------|------|---------|
+| `pipelines` | `patient_vitals_declarative` | DLT pipeline for telemetry (Bronze→Silver→Gold) |
+| `pipelines` | `patient_profiles_scd2` | DLT pipeline for patient profiles (SCD Type 2) |
+| `jobs` | `etl_pipeline_patient_vitals` | Scheduled job: Generate data → Run vitals pipeline (every 6h) |
+| `jobs` | `ingestion_layer_cleanup` | Daily cleanup of raw JSON volume |
+| `jobs` | `patient_data_silver_scd2_job` | Daily refresh of patient profile pipeline |
+| `jobs` | `patient_profile_update_spark_job` | CDC update simulation (every 3h) |
