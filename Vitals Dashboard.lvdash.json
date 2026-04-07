@@ -1,0 +1,432 @@
+{
+  "datasets": [
+    {
+      "name": "4d9e9cdc",
+      "displayName": "Patient Daily Summary",
+      "queryLines": [
+        "SELECT * FROM patient_daily_summary"
+      ],
+      "catalog": "patient_data",
+      "schema": "gold_patient_vitals"
+    },
+    {
+      "name": "34593878",
+      "displayName": "Global Vital  Stats",
+      "queryLines": [
+        "SELECT * FROM global_vital_stats\r\n",
+        "\r\n",
+        "\r\n",
+        "\r\n",
+        "       "
+      ],
+      "catalog": "patient_data",
+      "schema": "gold_patient_vitals"
+    },
+    {
+      "name": "2b859cb9",
+      "displayName": "Line Plots Aggregations",
+      "queryLines": [
+        "SELECT \r\n",
+        "       \"GLOBAL\" as patient_id, \r\n",
+        "       observation_date as report_day, \r\n",
+        "       current_state,\r\n",
+        "       pop_avg_hr as avg_bpm, \r\n",
+        "       pop_avg_resp_rate as avg_resp_rate,\r\n",
+        "       pop_avg_spo2 as avg_spo2,\r\n",
+        "       observation_date as last_processed_at\r\n",
+        "FROM global_vital_stats\r\n",
+        "UNION\r\n",
+        "SELECT * FROM Patient_daily_summary;"
+      ],
+      "catalog": "patient_data",
+      "schema": "gold_patient_vitals"
+    }
+  ],
+  "pages": [
+    {
+      "name": "673740e0",
+      "displayName": "Vitals Dashboard",
+      "layout": [
+        {
+          "widget": {
+            "name": "8c4d0774",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# <span style=\"text-align:center;display:block\"><span style=\"font-size: 21px;font-family: Arial;\">Vitals DashBoard</span></span>"
+              ]
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
+              }
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 0,
+            "width": 10,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "8b3c616d",
+            "queries": [
+              {
+                "name": "dashboards/01f12c70ff9e12d1b671b1ed6b253957/datasets/01f12c7a84271231a38dcfdb503de097_current_state",
+                "query": {
+                  "datasetName": "2b859cb9",
+                  "fields": [
+                    {
+                      "name": "current_state",
+                      "expression": "`current_state`"
+                    },
+                    {
+                      "name": "current_state_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "current_state",
+                    "queryName": "dashboards/01f12c70ff9e12d1b671b1ed6b253957/datasets/01f12c7a84271231a38dcfdb503de097_current_state"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
+              }
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 1,
+            "width": 5,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "c825c772",
+            "queries": [
+              {
+                "name": "dashboards/01f12c70ff9e12d1b671b1ed6b253957/datasets/01f12c7a84271231a38dcfdb503de097_patient_id",
+                "query": {
+                  "datasetName": "2b859cb9",
+                  "fields": [
+                    {
+                      "name": "patient_id",
+                      "expression": "`patient_id`"
+                    },
+                    {
+                      "name": "patient_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "selection": {
+                "defaultSelection": {
+                  "values": {
+                    "dataType": "STRING",
+                    "values": [
+                      {
+                        "value": "GLOBAL"
+                      }
+                    ]
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "showDescription": false
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "patient_id",
+                    "queryName": "dashboards/01f12c70ff9e12d1b671b1ed6b253957/datasets/01f12c7a84271231a38dcfdb503de097_patient_id"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 1,
+            "width": 5,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "4cdeedda",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "2b859cb9",
+                  "fields": [
+                    {
+                      "name": "current_state",
+                      "expression": "`current_state`"
+                    },
+                    {
+                      "name": "patient_id",
+                      "expression": "`patient_id`"
+                    },
+                    {
+                      "name": "report_day",
+                      "expression": "`report_day`"
+                    },
+                    {
+                      "name": "avg_bpm",
+                      "expression": "`avg_bpm`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showDescription": false
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "report_day",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg_bpm",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "current_state",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "extra": [
+                  {
+                    "fieldName": "patient_id"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
+              }
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 2,
+            "width": 10,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "14f3cb82",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "2b859cb9",
+                  "fields": [
+                    {
+                      "name": "current_state",
+                      "expression": "`current_state`"
+                    },
+                    {
+                      "name": "patient_id",
+                      "expression": "`patient_id`"
+                    },
+                    {
+                      "name": "report_day",
+                      "expression": "`report_day`"
+                    },
+                    {
+                      "name": "avg_resp_rate",
+                      "expression": "`avg_resp_rate`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showDescription": false
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "report_day",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg_resp_rate",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "current_state",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": false
+                },
+                "extra": [
+                  {
+                    "fieldName": "patient_id"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
+              }
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 7,
+            "width": 10,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "a4666bee",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "2b859cb9",
+                  "fields": [
+                    {
+                      "name": "current_state",
+                      "expression": "`current_state`"
+                    },
+                    {
+                      "name": "patient_id",
+                      "expression": "`patient_id`"
+                    },
+                    {
+                      "name": "report_day",
+                      "expression": "`report_day`"
+                    },
+                    {
+                      "name": "avg_spo2",
+                      "expression": "`avg_spo2`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showDescription": false
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "report_day",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg_spo2",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "current_state",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": false
+                },
+                "extra": [
+                  {
+                    "fieldName": "patient_id"
+                  }
+                ]
+              }
+            },
+            "specExtensions": {
+              "widgetBorderColor": {
+                "light": "#71B465"
+              }
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 12,
+            "width": 10,
+            "height": 5
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "47d381cc",
+      "displayName": "Global Filters",
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
