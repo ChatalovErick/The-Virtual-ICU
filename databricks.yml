@@ -44,10 +44,10 @@ resources:
       
       libraries:
         - file:
-            path: "./declarative-pipelines/patient_vitals.sql"
+            path: "./declarative-pipelines/transformations/patient_vitals.sql"
       
       configuration:
-        bundle.root_path: "${workspace.root_path}/src"
+        bundle.root_path: "${workspace.root_path}"
 
     # ── Pipeline 2: Patient Profiles SCD Type 2 ──
     patient_profiles_scd2:
@@ -65,10 +65,10 @@ resources:
       
       libraries:
         - file:
-            path: "./declarative-pipelines/patient_profile.sql"
+            path: "./declarative-pipelines/transformations/patient_profile.sql"
       
       configuration:
-        bundle.root_path: "${workspace.root_path}/src"
+        bundle.root_path: "${workspace.root_path}"
 
   # ─────────────────────────────────────────────────────
   # RESOURCES: JOBS
