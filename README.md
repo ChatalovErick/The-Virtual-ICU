@@ -78,3 +78,85 @@ This project uses **Databricks Asset Bundles (DABs)** to define all resources as
 | `jobs` | `ingestion_layer_cleanup` | Daily cleanup of raw JSON volume |
 | `jobs` | `patient_data_silver_scd2_job` | Daily refresh of patient profile pipeline |
 | `jobs` | `patient_profile_update_spark_job` | CDC update simulation (every 3h) |
+
+---
+
+## 🛠️ Setup & Configuration
+
+### Prerequisites
+- Databricks CLI installed and authenticated
+- Access to a Databricks workspace with Unity Catalog enabled
+- Python 3.8+ for data generation scripts
+
+### ⚠️ Required Configuration Changes
+
+Before deploying this project, you **must** update the following placeholders in `databricks.yml`:
+
+1. **Workspace URL** (Line 6):
+   ```yaml
+   workspace:
+     host: https://<your-workspace-url>  # Replace with your actual workspace URL
+   ```
+   Example: `https://adb-1234567890123456.15.azuredatabricks.net`
+
+2. **Notification Email** (Line 24):
+   ```yaml
+   on_failure:
+     - email: <your-email>  # Replace with your email address for failure alerts
+   ```
+   Example: `john.doe@company.com`
+
+Failure to update these values will result in deployment errors or missing notifications.
+
+### 🚀 Deployment Steps
+
+1. **Clone and Navigate**:
+   ```bash
+   git clone <repository-url>
+   cd <project-directory>
+   ```
+
+2. **Configure `databricks.yml`**:
+   Edit the file and replace the placeholder values mentioned above.
+
+3. **Validate Bundle**:
+   ```bash
+   databricks bundle validate
+   ```
+
+4. **Deploy to Workspace**:
+   ```bash
+   databricks bundle deploy
+   ```
+
+5. **Run Jobs**:
+   Once deployed, jobs will run automatically based on their schedules, or you can trigger them manually from the Databricks UI.
+
+---
+
+## 📁 Project Structure
+
+```
+├── databricks.yml              # DABs configuration (update workspace & email here!)
+├── README.md                   # This file
+├── Vitals Dashboard.lvdash.json # Lakeview dashboard definition
+├── 01_setup_unity_catalog_hierarchy.ipynb  # Initial catalog/schema setup
+├── querytests.dbquery.ipynb    # Query validation tests
+├── data-generator/             # Data simulation scripts
+│   ├── data_generator.ipynb           # Multi-vital patient telemetry simulator
+│   ├── patient_profile_update.ipynb   # EHR/CDC update simulator
+│   └── injestion_cleanup.ipynb        # Volume cleanup utilities
+└── declarative-pipelines/
+    └── transformations/        # DLT pipeline SQL definitions
+        ├── patient_vitals.sql       # Telemetry pipeline (Bronze→Silver→Gold)
+        └── patient_profile.sql      # SCD Type 2 profile pipeline
+```
+
+---
+
+## 🔍 Monitoring & Alerts
+
+- **Pipeline Health**: Monitor DLT pipeline runs in the Databricks Workflows UI
+- **Failure Notifications**: Email alerts are configured in `databricks.yml` (ensure you've updated the email address)
+- **Data Quality**: Review DLT Expectations violations in the pipeline event logs
+- **Dashboard Refresh**: The Vitals Dashboard auto-refreshes based on Gold layer updates
